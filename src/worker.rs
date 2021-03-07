@@ -2,7 +2,7 @@ use std::net::{TcpStream};
 use std::io::{Read, Write};
 use std::sync::mpsc::{Receiver};
 
-use crate::internal_http::HELLO_WORLD;
+use crate::http::{HELLO_WORLD_RESPONSE, process};
 
 pub const HTTP_BUFFER_SIZE:usize = 1024 * 1024 * 1;
 
@@ -25,9 +25,9 @@ fn handle(input_buffer: &mut Vec<u8>, mut stream: TcpStream, _: usize) {
 
     let _ = stream.read(input_buffer).expect("Failed to read into buffer");
     //println!("{} bytes", bytes);
-    let _ = std::str::from_utf8(&input_buffer).expect("valid utf8");
-    //println!("{}", received);
-    stream.write(HELLO_WORLD).expect("Failed to write response");
+    let received = std::str::from_utf8(input_buffer).unwrap();
+    process(received);
+    stream.write(HELLO_WORLD_RESPONSE).expect("Failed to write response");
     match stream.flush() {
         Ok(x) => x,
         Err(e) => {

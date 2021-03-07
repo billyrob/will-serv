@@ -4,7 +4,7 @@ use std::thread;
 // TODO: Remove non-std import!
 use rand::Rng;
 mod worker;
-mod internal_http;
+mod http;
 
 fn main() {
     let mut rng = rand::thread_rng();
