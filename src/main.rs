@@ -1,13 +1,41 @@
 use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::thread;
+use std::collections::HashMap;
+use std::{fs, thread};
+use std::path::Path;
 // TODO: Remove non-std import!
 use rand::Rng;
 mod worker;
 mod http;
 
+
+fn load_web_resources<P>(resource_map: &mut HashMap<String, String>, _: P)
+where P:AsRef<Path> {
+    /*
+    for entry in fs::read_dir(fs_path).unwrap() {
+        let path = entry.unwrap().path();
+        if path.is_dir() {
+            load_web_resources(resource_map, path);
+        }
+        else {
+            if path.ends_with(".html") {
+                resource_map.insert(k: K, v: V)
+            }
+        }
+    }
+    */
+    let a = fs::read_to_string("web/index.html").expect("Unable to read file");
+    let b = fs::read_to_string("web/test/index.html").expect("Unable to read file");
+    resource_map.insert("/".to_string(), a);
+    resource_map.insert("/test".to_string(), b);
+}
+
 fn main() {
     let mut rng = rand::thread_rng();
+    let mut html_resources: HashMap<String, String> = HashMap::new();
+
+    load_web_resources(&mut html_resources, "web");
+
     const NUM_WORKERS:usize = 20;
 
     let mut tx_channels: Vec<Sender<TcpStream>> = Vec::with_capacity(NUM_WORKERS);
@@ -19,6 +47,7 @@ fn main() {
             rx_channel: rx,
             input_buffer: vec![0u8; worker::HTTP_BUFFER_SIZE],
             output_buffer: vec![0u8; worker::HTTP_BUFFER_SIZE],
+            resource_map: html_resources.clone(),
         };
         thread::spawn(move || worker::run(w));
     }

@@ -1,0 +1,9 @@
+Continue with direct stream passing to threads or use a pool model?
+
+Figure out where to define internal HTTP message representation
+
+Lazy interpretation of received message parts?
+
+Actually start implementing business logic
+
+Any way to avoid double iteration of messages?
