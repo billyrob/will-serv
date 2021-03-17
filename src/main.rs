@@ -32,9 +32,9 @@ where P:AsRef<Path> {
 
 fn main() {
     let mut rng = rand::thread_rng();
-    let mut html_resources: HashMap<String, String> = HashMap::new();
+    let mut web_resources: HashMap<String, String> = HashMap::new();
 
-    load_web_resources(&mut html_resources, "web");
+    load_web_resources(&mut web_resources, "web");
 
     const NUM_WORKERS:usize = 20;
 
@@ -42,26 +42,28 @@ fn main() {
     for n in 0..NUM_WORKERS {
         let (tx, rx): (Sender<TcpStream>, Receiver<TcpStream>) = mpsc::channel();
         tx_channels.push(tx);
-        let w = worker::WorkerThread{
+        let mut w = worker::WorkerThread{
             id: n,
             rx_channel: rx,
             input_buffer: vec![0u8; worker::HTTP_BUFFER_SIZE],
-            output_buffer: vec![0u8; worker::HTTP_BUFFER_SIZE],
-            resource_map: html_resources.clone(),
+            resource_map: web_resources.clone(),
         };
-        thread::spawn(move || worker::run(w));
+        thread::spawn(move || worker::run(&mut w));
     }
     
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                let stream_clone = match stream.try_clone() {
-                    Ok(clone) => clone,
-                    Err(e) => panic!("Problem Cloning the stream: {:?}", e),
+                match stream.try_clone() {
+                    Ok(clone) => {
+                        let worker_index:usize = rng.gen_range(0..NUM_WORKERS);
+                        tx_channels[worker_index].send(clone).unwrap();
+                    },
+                    Err(e) => {
+                        println!("Problem Cloning the stream: {:?}", e);
+                    }
                 };
-                let worker_index:usize = rng.gen_range(0..NUM_WORKERS);
-                tx_channels[worker_index].send(stream_clone).unwrap();
             }
             Err(e) => {
                 println!("{}", e);
