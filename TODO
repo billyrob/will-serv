@@ -1,7 +1,14 @@
 Continue with direct stream passing to threads or use a pool model?
 
 Figure out where to define internal HTTP message representation
+    This is getting worse over time, the process_response method now is handling parsing of the request string and creating the response
 
 Lazy interpretation of received message parts?
 
-Actually start implementing business logic
+Parse html directory
+
+Unit Tests
+    Added some for the http module! :)
+    Might be difficult to add good tests for main/worker, might leave that to Integration Tests
+
+Integration/Perf Tests
