@@ -53,15 +53,8 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                match stream.try_clone() {
-                    Ok(clone) => {
-                        let worker_index:usize = rng.gen_range(0..NUM_WORKERS);
-                        tx_channels[worker_index].send(clone).unwrap();
-                    },
-                    Err(e) => {
-                        println!("Problem Cloning the stream: {:?}", e);
-                    }
-                };
+                let worker_index:usize = rng.gen_range(0..NUM_WORKERS);
+                tx_channels[worker_index].send(stream).unwrap();
             }
             Err(e) => {
                 println!("{}", e);
@@ -78,7 +71,6 @@ mod tests {
     fn test_resource_loading() {
         let mut web_resources: HashMap<String, String> = HashMap::new();
         load_web_resources(& mut web_resources, "web", &"web".to_string());
-        println!("{:?}", web_resources);
         assert!(web_resources.contains_key("/test/index.html"));
         let t = web_resources.get("/test/index.html").unwrap();
         assert!(t.contains("TEST"));
