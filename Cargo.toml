@@ -12,3 +12,7 @@ chrono = "0.4.19"
 
 [profile.release]
 debug = true
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-none-linux-gnueabihf-gcc"
+# Need to set env var CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=/usr/bin/arm-linux-gnueabihf-gcc
