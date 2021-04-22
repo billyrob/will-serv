@@ -5,8 +5,6 @@ Figure out where to define internal HTTP message representation
 
 Lazy interpretation of received message parts?
 
-Parse html directory
-
 Unit Tests
     Added some for the http module! :)
     Might be difficult to add good tests for main/worker, might leave that to Integration Tests

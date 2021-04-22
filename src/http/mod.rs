@@ -37,17 +37,30 @@ pub fn process_request(input_buffer: &str, resource_map: & HashMap<String, Strin
         line_num = line_num + 1;
     }
     let now: DateTime<Utc> = Utc::now();
+    let mut file: Option<&String> = None;
     if resource_map.contains_key(path) {
-        let html = resource_map.get(path).expect("Failed to request HTML");
-        return format!(
-            "HTTP/1.1 200 OK\nServer: will-serv/{}\nDate: {}\nContent-Type: text/html\nContent-Length: {}{}{}",
-            VERSION_STR, now.to_rfc2822(), html.len(), BODY_DELIMINATER, html);
+        file = Some(resource_map.get(path).expect("Failed to request HTML"));
     }
     else {
-        return format!("HTTP/1.1 404 Not Found\nServer: will-serv/{}\nDate: {}{}",
-            VERSION_STR, now.to_rfc2822(), BODY_DELIMINATER);
+        if path.ends_with("/") {
+            let mut requested_file = String::from(path);
+            requested_file.push_str("index.html");
+            if resource_map.contains_key(&requested_file) {
+                file = Some(resource_map.get(&requested_file).expect("Failed to request HTML"));
+            }
+        }
+    }
+
+    match file {
+        None => return format!(
+            "HTTP/1.1 404 Not Found\nServer: will-serv/{}\nDate: {}{}",
+            VERSION_STR, now.to_rfc2822(), BODY_DELIMINATER),
+        Some(f) => return format!(
+            "HTTP/1.1 200 OK\nServer: will-serv/{}\nDate: {}\nContent-Type: text/html\nContent-Length: {}{}{}",
+            VERSION_STR, now.to_rfc2822(), f.len(), BODY_DELIMINATER, f),
     }
 }
+
 
 
 #[cfg(test)]
