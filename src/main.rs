@@ -7,13 +7,25 @@ use rand::Rng;
 mod worker;
 mod http;
 
+fn load_web_resources_static(resource_map: &mut HashMap<String, String>) {
+    let home_page = String::from(include_str!("../web/index.html"));
+    resource_map.insert("/index.html".to_string(), home_page);
 
-fn load_web_resources<P>(resource_map: &mut HashMap<String, String>, fs_path: P, original_root: & String)
-where P:AsRef<Path> {
+    let test_page = String::from(include_str!("../web/test/index.html"));
+    resource_map.insert("/test/index.html".to_string(), test_page);
+}
+
+// Allow dead code while playing around with loading web resources at runtime or compile time
+#[allow(dead_code)]
+fn load_web_resources_runtime<P>(
+    resource_map: &mut HashMap<String, String>,
+    fs_path: P,
+    original_root: & String)
+    where P:AsRef<Path> {
     for entry in fs::read_dir(fs_path).unwrap() {
         let path = entry.unwrap().path();
         if path.is_dir() {
-            load_web_resources(resource_map, path, & original_root);
+            load_web_resources_runtime(resource_map, path, & original_root);
         }
         else {
             // Go from a path of 'web/test/index.html` to `/test/index.html` being the key
@@ -32,7 +44,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     let mut web_resources: HashMap<String, String> = HashMap::new();
 
-    load_web_resources(&mut web_resources, "web", &"web".to_string());
+    load_web_resources_static(&mut web_resources);
 
     const NUM_WORKERS:usize = 20;
 
@@ -68,9 +80,9 @@ fn main() {
 mod tests {
     use super::*;
     #[test]
-    fn test_resource_loading() {
+    fn test_resource_loading_runtime() {
         let mut web_resources: HashMap<String, String> = HashMap::new();
-        load_web_resources(& mut web_resources, "web", &"web".to_string());
+        load_web_resources_runtime(& mut web_resources, "web", &"web".to_string());
         assert!(web_resources.contains_key("/test/index.html"));
         let t = web_resources.get("/test/index.html").unwrap();
         assert!(t.contains("TEST"));
