@@ -1,77 +1,55 @@
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 
+pub mod request;
+pub mod response;
+
 // will-serv only serves files currently. No POSTs, PUTs, DELETEs, etc
 const ALLOWED_METHODS: &'static [&'static str] = &["GET", "HEAD"];
 const BODY_DELIMINATER: &str = "\r\n\r\n";
 const VERSION_STR: &str = env!("CARGO_PKG_VERSION");
 
 pub fn process_request(input_buffer: &str, resource_map: & HashMap<String, String>) -> String {
-    // Process input_buffer into HTTP concepts
-    let mut header_map: HashMap<&str, &str> = HashMap::new();
-    let mut line_num = 0;
-    let mut method: &str = "";
-    let mut path: &str = "";
-
-    let v: Vec<&str> = input_buffer.splitn(2, BODY_DELIMINATER).collect();
-    // The request must be delimited by the BODY_DELIMINATER
-    if v.len() < 2 {
-        let now: DateTime<Utc> = Utc::now();
-        return format!("HTTP/1.1 400 Bad Request\nServer: will-serv/{}\nDate: {}{}",
-            VERSION_STR, now.to_rfc2822(), BODY_DELIMINATER);
-    }
-    let headers = v[0];
-    let _body = v[1];
-    for line in headers.lines() {
-        if line_num == 0 {
-            // Read the Request Line
-            // https://tools.ietf.org/html/rfc7230#section-3.1.1
-            let pieces: Vec<&str> = line.splitn(3, ' ').collect();
-            method = pieces[0];
-            path = pieces[1];
-        }
-        else {
-            // Read Headers
-            // https://tools.ietf.org/html/rfc7230#section-3.2
-            let pieces: Vec<&str> = line.splitn(2, ':').collect();
-            let header_key = pieces[0];
-            let header_value = pieces[1].trim();
-            header_map.insert(header_key, header_value);
-        }
-        line_num = line_num + 1;
-    }
-
-    // Act on parsed elements
+    // Process input_buffer into struct
+    let req: request::HttpRequest;
     let now: DateTime<Utc> = Utc::now();
+    let mut response_headers: HashMap<String, String> = HashMap::new();
+    response_headers.insert(String::from("Server"), format!("will-serv/{}", VERSION_STR));
+    response_headers.insert(String::from("Date"), now.to_rfc2822());
+    match request::process_buffer(input_buffer) {
+        Err(_) => {
+            return response::create_response_string_no_body(response_headers, 400);
+        },
+        Ok(r) => req = r,
+    }
     let mut file: Option<&String> = None;
 
-    if !ALLOWED_METHODS.contains(&method) {
+    if !ALLOWED_METHODS.contains(&req.method.as_str()) {
         let allow_header = ALLOWED_METHODS.join(", ");
-        return format!(
-            "HTTP/1.1 405 Method Not Allowed\nAllow: {}\nServer: will-serv/{}\nDate: {}{}",
-            allow_header, VERSION_STR, now.to_rfc2822(), BODY_DELIMINATER);
+        response_headers.insert(String::from("Allow"), allow_header);
+        return response::create_response_string_no_body(response_headers, 405);
     }
-
-    if resource_map.contains_key(path) {
-        file = Some(resource_map.get(path).expect("Failed to request HTML"));
+    if resource_map.contains_key(&req.path) {
+        file = Some(resource_map.get(&req.path).unwrap());
     }
     else {
-        if path.ends_with("/") {
-            let mut requested_file = String::from(path);
+        if req.path.ends_with("/") {
+            let mut requested_file = String::from(req.path);
             requested_file.push_str("index.html");
             if resource_map.contains_key(&requested_file) {
-                file = Some(resource_map.get(&requested_file).expect("Failed to request HTML"));
+                file = Some(resource_map.get(&requested_file).unwrap());
             }
         }
     }
-
     match file {
-        None => return format!(
-            "HTTP/1.1 404 Not Found\nServer: will-serv/{}\nDate: {}{}",
-            VERSION_STR, now.to_rfc2822(), BODY_DELIMINATER),
-        Some(f) => return format!(
-            "HTTP/1.1 200 OK\nServer: will-serv/{}\nDate: {}\nContent-Type: text/html\nContent-Length: {}{}{}",
-            VERSION_STR, now.to_rfc2822(), f.len(), BODY_DELIMINATER, f),
+        None => {
+            return response::create_response_string_no_body(response_headers, 404);
+        },
+        Some(f) => {
+            response_headers.insert(String::from("Content-Type"), String::from("text/html"));
+            response_headers.insert(String::from("Content-Length"), f.len().to_string());
+            return response::create_response_string(response_headers, 200, Some(f));
+        }
     }
 }
 
