@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::{fs, thread};
 use std::path::Path;
 use rand::Rng;
+use std::env;
 mod worker;
 mod http;
 
@@ -11,8 +12,8 @@ fn load_web_resources_static(resource_map: &mut HashMap<String, String>) {
     let home_page = String::from(include_str!("../web/index.html"));
     resource_map.insert("/index.html".to_string(), home_page);
 
-    let test_page = String::from(include_str!("../web/test/index.html"));
-    resource_map.insert("/test/index.html".to_string(), test_page);
+    let intro_rust = String::from(include_str!("../web/articles/intro_rust.html"));
+    resource_map.insert("/articles/intro_rust.html".to_string(), intro_rust);
 }
 
 // Allow dead code while playing around with loading web resources at runtime or compile time
@@ -41,6 +42,16 @@ fn load_web_resources_runtime<P>(
 }
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let port: &str;
+    if args.len() > 1 {
+        port = &args[1];
+    }
+    else {
+        port = "8080";
+    }
+    let mut hostport = String::from("0.0.0.0:");
+    hostport.push_str(port);
     let mut rng = rand::thread_rng();
     let mut web_resources: HashMap<String, String> = HashMap::new();
 
@@ -61,7 +72,7 @@ fn main() {
         thread::spawn(move || worker::run(&mut w));
     }
     
-    let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
+    let listener = TcpListener::bind(hostport).unwrap();
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
@@ -83,8 +94,8 @@ mod tests {
     fn test_resource_loading_runtime() {
         let mut web_resources: HashMap<String, String> = HashMap::new();
         load_web_resources_runtime(& mut web_resources, "web", &"web".to_string());
-        assert!(web_resources.contains_key("/test/index.html"));
-        let t = web_resources.get("/test/index.html").unwrap();
-        assert!(t.contains("TEST"));
+        assert!(web_resources.contains_key("/index.html"));
+        let t = web_resources.get("/index.html").unwrap();
+        assert!(t.contains("Danger"));
     }
 }

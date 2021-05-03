@@ -1,0 +1,21 @@
+This website is being provided to you via my first rust project: <a href="https://github.com/billyrob/will-serv"> will-serv </a> <br>
+<br>
+will-serv is multi-threaded HTTP file-server based upon the standard library's TcpListener/TcpStream <br>
+My goal was to create a simple HTTP server with absolutely minimal depencies as a means to jump into Rust, specifically threading and networking in Rust. <br>
+<br>
+Things learned along the way:
+<ul>
+    <li> Definining unit tests in the same file as the implementation is a nice change of pace.</li>
+    <li> Cargo integration with tests so that testing and building are better coupled is great.</li>
+    <li> I originally aimed to only have static memory allocations, but this is much easier said than done</li>
+        <ul> 
+        <li> Being able to dynamically load files to serve to users is directly contrary to staticly defined memory</li>
+        <li> Splitting strings and dynamically building response strings are much easier with heap allocations </li>
+        <li> Passing Strings around is a lot easier than str's due to the borrow checker. But what this really means is that doing heap allocations imposes fewer design constraints on the programmer. Whereas static/stack allocations require the programmer to consider what will be needed at each bottom of a call stack, while at the top of the call stack.</li>
+        <li> Allowing arbitrary headers from clients almost requires heap allocations</li>
+        <li> I'm still interested in this idea, since being able to specify a hard memory ceiling is really appealing to me. Will probably return to this as a v2 thing</li>
+        </ul>
+    <li> Compiling for ARM (raspberry pi) wasn't trivial but it was broadly easy. Super neat to be able to run this on my linux laptop, aws ec2, and a raspberry pi.</li>
+    <li> By compiling in my dependencies and not having a config file, I can just scp the output binary to an ec2 instance, run it in a screen, and point my domain's DNS at the node. This might sound obvious but it is so fun having this be so simple.</li>
+    <li> The HTTP spec is messier than I expected, with many RFCs over the years.</li>
+</ul>

@@ -5,7 +5,7 @@ pub mod request;
 pub mod response;
 
 // will-serv only serves files currently. No POSTs, PUTs, DELETEs, etc
-const ALLOWED_METHODS: &'static [&'static str] = &["GET", "HEAD"];
+const ALLOWED_METHODS: &'static [&'static str] = &["GET"];
 const BODY_DELIMINATER: &str = "\r\n\r\n";
 const VERSION_STR: &str = env!("CARGO_PKG_VERSION");
 
@@ -115,6 +115,6 @@ mod tests {
         let response_html = process_request(post_request_buffer, & web_resources);
 
         assert!(response_html.contains("HTTP/1.1 405 Method Not Allowed"));
-        assert!(response_html.contains("Allow: GET, HEAD"));
+        assert!(response_html.contains("Allow: GET"));
     }
 }

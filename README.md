@@ -1,0 +1,1 @@
+This is a multi-threaded HTTP file-server based on TcpListener/TcpStream. There is no reason to use this, just me working through a fun project while learning Rust :)
