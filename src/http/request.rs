@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use log;
 
 use crate::http::{BODY_DELIMINATER};
 
@@ -40,6 +41,7 @@ pub fn process_buffer(input_buffer: &str) -> Result<HttpRequest, ()> {
         }
         line_num = line_num + 1;
     }
+    log::info!("HTTP Request, Method: {}, Path: {}", method, path);
     Ok(HttpRequest {
         headers: header_map,
         method: String::from(method),

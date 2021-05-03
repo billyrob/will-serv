@@ -5,15 +5,21 @@ use std::{fs, thread};
 use std::path::Path;
 use rand::Rng;
 use std::env;
+use log;
+use env_logger;
 mod worker;
 mod http;
 
 fn load_web_resources_static(resource_map: &mut HashMap<String, String>) {
-    let home_page = String::from(include_str!("../web/index.html"));
-    resource_map.insert("/index.html".to_string(), home_page);
+    resource_map.insert(
+        "/index.html".to_string(),
+        String::from(include_str!("../web/index.html"))
+    );
 
-    let intro_rust = String::from(include_str!("../web/articles/intro_rust.html"));
-    resource_map.insert("/articles/intro_rust.html".to_string(), intro_rust);
+    resource_map.insert(
+        "/articles/intro_rust.html".to_string(),
+        String::from(include_str!("../web/articles/intro_rust.html"))
+    );
 }
 
 // Allow dead code while playing around with loading web resources at runtime or compile time
@@ -42,6 +48,7 @@ fn load_web_resources_runtime<P>(
 }
 
 fn main() {
+    env_logger::init();
     let args: Vec<String> = env::args().collect();
     let port: &str;
     if args.len() > 1 {
@@ -80,7 +87,7 @@ fn main() {
                 tx_channels[worker_index].send(stream).unwrap();
             }
             Err(e) => {
-                println!("{}", e);
+                log::error!("Got error: {}", e);
             }
         }
     }

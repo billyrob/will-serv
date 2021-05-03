@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use log;
 
 pub mod request;
 pub mod response;
@@ -8,6 +9,15 @@ pub mod response;
 const ALLOWED_METHODS: &'static [&'static str] = &["GET"];
 const BODY_DELIMINATER: &str = "\r\n\r\n";
 const VERSION_STR: &str = env!("CARGO_PKG_VERSION");
+
+#[allow(dead_code)]
+pub fn create_short_circuit_error_response() -> String {
+    let now: DateTime<Utc> = Utc::now();
+    let mut response_headers: HashMap<String, String> = HashMap::new();
+    response_headers.insert(String::from("Server"), format!("will-serv/{}", VERSION_STR));
+    response_headers.insert(String::from("Date"), now.to_rfc2822());
+    return response::create_response_string_no_body(response_headers, 400);
+}
 
 pub fn process_request(input_buffer: &str, resource_map: & HashMap<String, String>) -> String {
     // Process input_buffer into struct
@@ -18,6 +28,7 @@ pub fn process_request(input_buffer: &str, resource_map: & HashMap<String, Strin
     response_headers.insert(String::from("Date"), now.to_rfc2822());
     match request::process_buffer(input_buffer) {
         Err(_) => {
+            log::info!("Return Code: 400");
             return response::create_response_string_no_body(response_headers, 400);
         },
         Ok(r) => req = r,
@@ -27,6 +38,7 @@ pub fn process_request(input_buffer: &str, resource_map: & HashMap<String, Strin
     if !ALLOWED_METHODS.contains(&req.method.as_str()) {
         let allow_header = ALLOWED_METHODS.join(", ");
         response_headers.insert(String::from("Allow"), allow_header);
+        log::info!("Return Code: 405");
         return response::create_response_string_no_body(response_headers, 405);
     }
     if resource_map.contains_key(&req.path) {
@@ -43,11 +55,13 @@ pub fn process_request(input_buffer: &str, resource_map: & HashMap<String, Strin
     }
     match file {
         None => {
+            log::info!("Return Code: 404");
             return response::create_response_string_no_body(response_headers, 404);
         },
         Some(f) => {
-            response_headers.insert(String::from("Content-Type"), String::from("text/html"));
+            response_headers.insert(String::from("Content-Type"), String::from("text/html; charset=UTF-8"));
             response_headers.insert(String::from("Content-Length"), f.len().to_string());
+            log::info!("Return Code: 200");
             return response::create_response_string(response_headers, 200, Some(f));
         }
     }

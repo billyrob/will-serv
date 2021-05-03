@@ -13,11 +13,17 @@ pub fn create_response_string(headers: HashMap<String, String>, return_code: i32
     }
     response_string.push_str("\n");
     for header in headers.keys() {
-        let header_val = headers.get(header).unwrap();
-        response_string.push_str(header);
-        response_string.push_str(": ");
-        response_string.push_str(header_val);
-        response_string.push_str("\n");
+        match headers.get(header) {
+            Some(header_val) => {
+                response_string.push_str(header);
+                response_string.push_str(": ");
+                response_string.push_str(header_val);
+                response_string.push_str("\n");
+            }
+            _ => {}
+        }
+
+        
     }
     // HACK: The last newline added in the above loop is not desired in combination with the body deliminater
     // It can be unconditionally removed safely, and it would be a pain to keep a counter in the above loop

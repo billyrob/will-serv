@@ -2,6 +2,7 @@ use std::net::{TcpStream};
 use std::io::{Read, Write};
 use std::sync::mpsc::{Receiver};
 use std::collections::HashMap;
+use log;
 
 use crate::http::{process_request};
 
@@ -24,21 +25,53 @@ pub fn run(worker: &mut WorkerThread) {
 }
 
 fn handle_tcp_stream(worker: &mut WorkerThread, mut stream: TcpStream) {
-
-    stream.read(&mut worker.input_buffer).expect("Failed to read into buffer");
-    let received = std::str::from_utf8(&mut worker.input_buffer).unwrap();
-    let response = process_request(received, &worker.resource_map);
-    stream.write(response.as_bytes()).expect("Failed to write response");
-    match stream.flush() {
-        Ok(x) => x,
+    let peer_addr = stream.peer_addr();
+    if peer_addr.is_ok() {
+        log::info!("Received request from: {}", peer_addr.unwrap());
+    }    
+    let res = stream.read(&mut worker.input_buffer);
+    let received: Option<&str>;
+    match res {
+        Ok(_) => {
+            match std::str::from_utf8(&mut worker.input_buffer) {
+                Ok(x) => received = Some(x),
+                Err(e) => {
+                    log::error!("Input data not valid utf8 {:?}", e);
+                    return;
+                }
+            }
+        },
         Err(e) => {
-            println!("Failed to flush data {:?}", e);
+            log::error!("Failed to read from stream {:?}", e);
+            return;
         }
-    };
-    match stream.shutdown(std::net::Shutdown::Both) {
-        Ok(x) => x,
-        Err(e) => {
-            println!("Failed to shutdown connection {:?}", e);
+    }
+    match received {
+        None => {
+            log::error!("Was unable to process the request");
+            match stream.shutdown(std::net::Shutdown::Both) {
+                Ok(x) => x,
+                Err(e) => {
+                    log::error!("Failed to shutdown connection {:?}", e);
+                }
+            };
+        },
+        Some(r) => {
+            let response = process_request(r, &worker.resource_map);
+            let _ = stream.write(response.as_bytes());
+            match stream.flush() {
+                Ok(x) => x,
+                Err(e) => {
+                    log::error!("Failed to flush data {:?}", e);
+                }
+            };
+            match stream.shutdown(std::net::Shutdown::Both) {
+                Ok(x) => x,
+                Err(e) => {
+                    log::error!("Failed to shutdown connection {:?}", e);
+                }
+            };
         }
-    };
+    }
+    
 }
