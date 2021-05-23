@@ -1,7 +1,5 @@
-Continue with direct stream passing to threads or use a pool model?
+Need to decouple the main thread from the worker threads. A single worker thread dying was eventually leading to the main thread dying.
 
-Unit Tests
-    Added some for the http module! :)
-    Might be difficult to add good tests for main/worker, might leave that to Integration Tests
+Serve more than just html files (.jpg, .png, .pdf, .css, .js, etc)
 
 Integration/Perf Tests

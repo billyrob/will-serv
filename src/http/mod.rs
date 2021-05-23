@@ -116,6 +116,16 @@ mod tests {
     }
 
     #[test]
+    fn test_malformed_request_line() {
+        let mut web_resources: HashMap<String, String> = HashMap::new();
+        web_resources.insert("/".to_string(), "<h1> TEST </h1>".to_string());
+        let get_request_buffer: &str = "GET/1.1
+        QWER:ASDF\r\n\r\n";
+        let response_html = process_request(get_request_buffer, & web_resources);
+        assert!(response_html.contains("HTTP/1.1 400 Bad Request"));
+    }
+
+    #[test]
     fn test_method_parsing() {
         let mut web_resources: HashMap<String, String> = HashMap::new();
         web_resources.insert("/".to_string(), "<h1> TEST </h1>".to_string());

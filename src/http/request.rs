@@ -28,6 +28,9 @@ pub fn process_buffer(input_buffer: &str) -> Result<HttpRequest, ()> {
             // Read the Request Line
             // https://tools.ietf.org/html/rfc7230#section-3.1.1
             let pieces: Vec<&str> = line.splitn(3, ' ').collect();
+            if pieces.len() < 2 {
+                return Err(());
+            }
             method = pieces[0];
             path = pieces[1];
         }

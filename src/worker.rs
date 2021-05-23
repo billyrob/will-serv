@@ -36,7 +36,7 @@ fn handle_tcp_stream(worker: &mut WorkerThread, mut stream: TcpStream) {
             match std::str::from_utf8(&mut worker.input_buffer) {
                 Ok(x) => received = Some(x),
                 Err(e) => {
-                    log::error!("Input data not valid utf8 {:?}", e);
+                    log::error!("Input data not valid utf8s {:?}", e);
                     return;
                 }
             }
