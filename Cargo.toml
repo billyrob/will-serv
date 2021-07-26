@@ -1,6 +1,6 @@
 [package]
 name = "will-serv"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["wrobinson <will@williamjamesrobinson.com>"]
 edition = "2018"
 

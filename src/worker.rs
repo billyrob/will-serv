@@ -19,8 +19,16 @@ pub struct WorkerThread {
 
 pub fn run(worker: &mut WorkerThread) {
     loop {
-        let stream = worker.rx_channel.recv().unwrap();
-        handle_tcp_stream(worker, stream);
+        let stream = worker.rx_channel.recv();
+        match stream {
+            Ok(stream) => {
+                handle_tcp_stream(worker, stream);
+            }
+            Err(e) => {
+                log::error!("Failed to send to worker thread {:?}", e);
+            }
+        }
+        
     }
 }
 

@@ -1,5 +1,7 @@
 Need to decouple the main thread from the worker threads. A single worker thread dying was eventually leading to the main thread dying.
 
+Runtime state inspection
+
 Serve more than just html files (.jpg, .png, .pdf, .css, .js, etc)
 
 Integration/Perf Tests

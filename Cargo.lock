@@ -215,7 +215,7 @@ checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "will-serv"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "chrono",
  "env_logger",
